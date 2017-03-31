@@ -1,6 +1,5 @@
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.lang.ClassNotFoundException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -25,8 +24,13 @@ public class BasicClient
              * Initialize Scanner for user input.
              */
             InetAddress host = InetAddress.getLocalHost();
+        	Socket socket = new Socket(host.getHostName(), 4446);
             Scanner userInput = new Scanner(System.in);
-            
+            Scanner input = new Scanner(socket.getInputStream());
+            PrintWriter output = new PrintWriter(socket.getOutputStream());
+            String sendMessage;
+            String recieveMessage;
+
             /**
              * Creates a conditional loop where the client can only 
              * send a max of 10 messages before terminating.
@@ -40,10 +44,9 @@ public class BasicClient
         		 * Will then check length of string, if not exactly 10 will reject
         		 * and ask for new input.
         		 */
-            	Socket socket = new Socket(host.getHostName(), 4446);
             	
         		System.out.println("Enter a 10 character message:");
-        		String sendMessage = userInput.nextLine();
+        		sendMessage = userInput.nextLine();
         		
         		while(sendMessage.length()!=10)
         		{
@@ -51,32 +54,35 @@ public class BasicClient
         			sendMessage = userInput.nextLine();
         		}
                 
-                
+        		
                 /**
                  * Send stored String to server.
                  */
-                ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
-                output.writeObject(sendMessage);
+                output.println(sendMessage);
+                output.flush();
 
 
                 /**
                  * Receive reply from server and print to console.
                  */
 
-                ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
-                String recieveMessage  = (String) input.readObject();
+                
+                recieveMessage  = input.nextLine();
                 System.out.println("Server: " + recieveMessage );
+                output.flush();
 
                 /**
-                 * Closes all streams and finally the socket.
+                 * Increase count by 1, Client will quit after 10 messages sent.
                  */
-                
                 count++;
-                input.close();
-                output.close();
-                socket.close();
             }
+            
+            /**
+             * Close all streams and finally the socket.
+             */
+            input.close();
+            output.close();
+            socket.close();
             userInput.close();
-          
 	}
 }
